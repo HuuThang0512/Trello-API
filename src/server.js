@@ -1,30 +1,42 @@
 import express from "express"
-import { mapOrder } from "~/utils/sorts.js"
+import exitHook from "async-exit-hook"
+import { CONNECT_DB, GET_DB, CLOSE_DB } from "./config/mongodb.js"
+import { env } from "~/config/environment"
+import { APIs_V1 } from "~/routes/v1"
+const START_SERVER = () => {
+  const app = express()
 
-const app = express()
+  app.use(express.json())
 
-const hostname = "localhost"
-const port = 8017
+  app.use("/v1", APIs_V1)
+  app.get("/", async (req, res) => {
+    // Test Absolute import mapOrder
+    console.log(await GET_DB().listCollections().toArray())
+    res.end("<h1>Hello World!</h1><hr>")
+  })
 
-app.get("/", (req, res) => {
-  // Test Absolute import mapOrder
-  console.log(
-    mapOrder(
-      [
-        { id: "id-1", name: "One" },
-        { id: "id-2", name: "Two" },
-        { id: "id-3", name: "Three" },
-        { id: "id-4", name: "Four" },
-        { id: "id-5", name: "Five" }
-      ],
-      ["id-5", "id-4", "id-2", "id-3", "id-1"],
-      "id"
+  app.listen(env.APP_PORT, env.APP_HOST, () => {
+    // eslint-disable-next-line no-console
+    console.log(
+      `Hello ${env.AUTHOR}, I am running at http://${env.APP_HOST}:${env.APP_PORT}/`,
     )
-  )
-  res.end("<h1>Hello World!</h1><hr>")
-})
+  })
 
-app.listen(port, hostname, () => {
-  // eslint-disable-next-line no-console
-  console.log(`Hello Huu Thang, I am running at http://${hostname}:${port}/`)
-})
+  /**Thực hiện các tác vụ cleanup trước khi đóng server */
+  exitHook(() => {
+    console.log("Disconnecting")
+    CLOSE_DB()
+    console.log("Disconnected")
+  })
+}
+
+;(async () => {
+  try {
+    console.log("Connecting")
+    await CONNECT_DB()
+    START_SERVER()
+  } catch (err) {
+    console.log("Error connecting to MongoDB", err)
+    process.exit(0)
+  }
+})()
