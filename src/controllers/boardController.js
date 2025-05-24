@@ -3,12 +3,9 @@ const createNew = async (req, res, next) => {
   try {
     console.log(req.body)
     // next()
-    res.status(StatusCodes.CREATED).json({ message: "POST CONTROLLER" })
+    res.status(StatusCodes.CREATED).json({ message: "BOARD CONTROLLER" })
   } catch (error) {
-    console.log(error)
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      errors: error.message,
-    })
+    next(error)
   }
 }
 
