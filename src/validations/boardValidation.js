@@ -16,8 +16,8 @@ const createNew = async (req, res, next) => {
     console.log(req.body)
     // Ser abortEarly: false để trả về tất cả lỗi
     await correctCondition.validateAsync(req.body, { abortEarly: false })
-    // next()
-    res.status(StatusCodes.CREATED).json({ message: "POST" })
+    // res.status(StatusCodes.CREATED).json({ message: "POST" })
+    next()
   } catch (error) {
     console.log(error)
     res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({
