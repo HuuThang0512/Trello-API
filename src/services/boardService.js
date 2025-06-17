@@ -1,4 +1,7 @@
-import { slugify } from "~/utils/formatter"
+import {slugify} from "~/utils/formatter"
+import {BoardModel} from "~/models/boardModel"
+import ApiError from "~/utils/ApiError"
+import {cloneDeep} from "lodash"
 
 const createNew = async (reqBody) => {
   try {
@@ -6,10 +9,34 @@ const createNew = async (reqBody) => {
       ...reqBody,
       slug: slugify(reqBody.title),
     }
-    return newBoard
-  } catch (error) {}
+    const createdBoard = await BoardModel.createNew(newBoard)
+    const getNewBoard = await BoardModel.getDetails(createdBoard.insertedId)
+    return getNewBoard
+  } catch (error) {
+    throw error
+  }
+}
+const getDetails = async (boardId) => {
+  try {
+    const board = await BoardModel.getDetails(boardId)
+
+    if (!board) {
+      throw new ApiError(StatusCodes.NOT_FOUND, "Board not found")
+    }
+    const resBoard = cloneDeep(board)
+    resBoard.columns.forEach((column) => {
+      column.cards = resBoard.cards.filter((card) =>
+        card.columnId.equals(column._id),
+      )
+    })
+    delete resBoard.cards
+    return resBoard
+  } catch (error) {
+    throw error
+  }
 }
 
 export const BoardService = {
   createNew,
+  getDetails,
 }
