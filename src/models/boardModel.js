@@ -3,8 +3,8 @@ import {OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE} from "~/utils/validators"
 import {GET_DB} from "~/config/mongodb"
 import {ObjectId} from "mongodb"
 import {BOARD_TYPE} from "~/utils/constants"
-import {columnModel} from "./columnModel"
-import {cardModel} from "./cardModel"
+import {ColumnModel} from "./columnModel"
+import {CardModel} from "./cardModel"
 
 const BOARD_COLLECTION_NAME = "boards"
 const BOARD_COLLECTION_SCHEMA = Joi.object({
@@ -60,7 +60,7 @@ const getDetails = async (id) => {
         },
         {
           $lookup: {
-            from: columnModel.COLUMN_COLLECTION_NAME,
+            from: ColumnModel.COLUMN_COLLECTION_NAME,
             localField: "_id",
             foreignField: "boardId",
             as: "columns",
@@ -68,7 +68,7 @@ const getDetails = async (id) => {
         },
         {
           $lookup: {
-            from: cardModel.CARD_COLLECTION_NAME,
+            from: CardModel.CARD_COLLECTION_NAME,
             localField: "_id",
             foreignField: "boardId",
             as: "cards",
@@ -81,10 +81,30 @@ const getDetails = async (id) => {
     throw new Error(error)
   }
 }
+const pushColumnOrderIds = async function (column) {
+  try {
+    const board = await findOneById(column.boardId)
+    if (board) {
+      const result = await GET_DB()
+        .collection(BOARD_COLLECTION_NAME)
+        .findOneAndUpdate(
+          {_id: new ObjectId(String(board._id))},
+          {$push: {columnOrderIds: new ObjectId(String(column._id))}},
+          {returnDocument: "after"},
+        )
+      return result.value
+    }
+    return null
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
 export const BoardModel = {
   BOARD_COLLECTION_NAME,
   BOARD_COLLECTION_SCHEMA,
   createNew,
   findOneById,
   getDetails,
+  pushColumnOrderIds,
 }

@@ -36,7 +36,7 @@ const getDetails = async (boardId) => {
   }
 }
 
-export const BoardService = {
+export const boardService = {
   createNew,
   getDetails,
 }
